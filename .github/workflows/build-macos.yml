@@ -12,6 +12,8 @@ jobs:
     # and is a universal binary (Apple silicon + Intel).
     runs-on: macos-latest
     timeout-minutes: 60
+    permissions:
+      contents: write   # to publish the DMG as a GitHub Release
     steps:
       - uses: actions/checkout@v4
 
@@ -46,6 +48,30 @@ jobs:
           name: Matryoshka-Fugue-macOS
           path: dist/Matryoshka-Fugue-macOS.dmg
           if-no-files-found: error
+
+      # Publish a public download: https://github.com/<owner>/<repo>/releases/latest/download/Matryoshka-Fugue-macOS.dmg
+      - name: Publish release
+        if: github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -e
+          VERSION=$(grep -E '^project\(MatryoshkaFugue VERSION' CMakeLists.txt | sed -E 's/.*VERSION ([0-9.]+).*/\1/')
+          TAG="v${VERSION}"
+          cat > release-notes.md <<NOTES
+          Matryoshka Fugue ${VERSION} for macOS 11 and later (including Sonoma 14.6), Apple silicon and Intel.
+
+          **Download:** Matryoshka-Fugue-macOS.dmg below. It contains the standalone app, the VST3 and AU plug-ins, and install notes.
+
+          The app is not notarised by Apple. On first launch, right-click the app and choose **Open**, then **Open** again.
+          If macOS says it is damaged, run: \`xattr -dr com.apple.quarantine "/Applications/Matryoshka Fugue.app"\`
+
+          Built from ${GITHUB_SHA} by workflow run ${GITHUB_RUN_NUMBER}.
+          NOTES
+          # Rebuild the release so the tag always points at the commit that produced the DMG.
+          gh release delete "$TAG" --cleanup-tag --yes 2>/dev/null || true
+          gh release create "$TAG" dist/Matryoshka-Fugue-macOS.dmg \
+            --target "$GITHUB_SHA" --title "Matryoshka Fugue ${VERSION}" --notes-file release-notes.md --latest
 
   linux-check:
     # Quick compile + test check on Linux (same code, Standalone only).

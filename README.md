@@ -2,6 +2,8 @@
 
 Matryoshka Fugue is a generative instrument for macOS. Four nesting dolls play one musical subject at four sizes: Babushka (the largest), Mama (second largest), Dochka (second smallest) and Malyshka (the smallest). Each doll is a fractal copy of the others in pitch, note combinations, tempo and rhythm, so together they sound like a fugue.
 
+**[Download for macOS](https://github.com/Lorca7/Russian-Nesting-DAW/releases/latest/download/Matryoshka-Fugue-macOS.dmg)** (Sonoma 14.6 or later; Apple silicon and Intel)
+
 It runs as a **standalone macOS app** (Sonoma 14.6 or later, Apple silicon and Intel). It also builds as **VST3 and Audio Unit** plug-ins from the same code. In the app you can:
 
 - record what you play, as a WAV file plus a MIDI file of every doll's notes
@@ -51,9 +53,11 @@ The subject generators include a fractal contour (midpoint displacement), a rand
 
 ## Getting the app
 
-### Download a build
+### Download
 
-Every push runs the **Build macOS app** workflow (GitHub → Actions) on GitHub's hosted macOS runner. The workflow compiles a universal binary for macOS 11 and later, which covers Sonoma 14.6. It runs the tests and uploads `Matryoshka-Fugue-macOS.dmg` as an artifact. The DMG contains the app, the VST3 and AU plug-ins, and install notes.
+**[Download Matryoshka-Fugue-macOS.dmg](https://github.com/Lorca7/Russian-Nesting-DAW/releases/latest/download/Matryoshka-Fugue-macOS.dmg)**. You can also find it on the [Releases page](https://github.com/Lorca7/Russian-Nesting-DAW/releases/latest).
+
+The DMG contains the app, the VST3 and AU plug-ins, and install notes. Every push runs the **Build macOS app** workflow on GitHub's hosted macOS runner. The workflow compiles a universal binary for macOS 11 and later, which covers Sonoma 14.6, runs the tests, and republishes the release.
 
 The app has an ad-hoc signature but is **not notarised**, so the first launch needs a right-click → **Open**. See [docs/INSTALL-macOS.txt](docs/INSTALL-macOS.txt).
 
