@@ -33,6 +33,13 @@ int main (int argc, char** argv)
         juce::FileOutputStream out (file);
         png.writeImageToStream (img, out);
         std::printf ("wrote %s\n", file.getFullPathName().toRawUTF8());
+
+        juce::JPEGImageFormat jpg;
+        jpg.setQuality (0.72f);
+        auto jfile = outDir.getChildFile (name + ".jpg");
+        jfile.deleteFile();
+        juce::FileOutputStream jout (jfile);
+        jpg.writeImageToStream (img, jout);
     };
 
     shoot ("editor-1280x800", 1280, 800);
