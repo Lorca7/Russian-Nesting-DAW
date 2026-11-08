@@ -8,8 +8,9 @@ on:
 
 jobs:
   macos:
-    # macOS 14 Sonoma runner (Apple silicon). The build is universal (arm64 + x86_64).
-    runs-on: macos-14
+    # Latest hosted macOS runner. The app targets macOS 11+ (so it runs on Sonoma 14.6)
+    # and is a universal binary (Apple silicon + Intel).
+    runs-on: macos-latest
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
@@ -37,6 +38,7 @@ jobs:
           codesign --force --deep --sign - "dist/Matryoshka Fugue/Plug-ins/Matryoshka Fugue.component"
           cp docs/INSTALL-macOS.txt "dist/Matryoshka Fugue/READ ME FIRST.txt"
           lipo -info "dist/Matryoshka Fugue/Matryoshka Fugue.app/Contents/MacOS/Matryoshka Fugue"
+          otool -l "dist/Matryoshka Fugue/Matryoshka Fugue.app/Contents/MacOS/Matryoshka Fugue" | grep -A3 LC_BUILD_VERSION | head -4
           hdiutil create -volname "Matryoshka Fugue" -srcfolder "dist/Matryoshka Fugue" -ov -format UDZO "dist/Matryoshka-Fugue-macOS.dmg"
 
       - uses: actions/upload-artifact@v4
@@ -44,3 +46,21 @@ jobs:
           name: Matryoshka-Fugue-macOS
           path: dist/Matryoshka-Fugue-macOS.dmg
           if-no-files-found: error
+
+  linux-check:
+    # Quick compile + test check on Linux (same code, Standalone only).
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install JUCE dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libasound2-dev libfreetype-dev libfontconfig1-dev libx11-dev libxrandr-dev \
+            libxinerama-dev libxcursor-dev libxcomposite-dev libxext-dev libgl1-mesa-dev ninja-build
+      - name: Configure
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+      - name: Build
+        run: cmake --build build -j 4
+      - name: Test
+        run: ctest --test-dir build --output-on-failure
