@@ -40,7 +40,7 @@ private:
     MatryoshkaProcessor& proc;
     SubjectEditor editor;
     Picker generator { "Generator" };
-    juce::TextButton generate { "Generate" }, nest { "Nest chords 4-3-2-1" };
+    juce::TextButton generate { "Generate" };
     juce::Slider steps;
     uint32_t seed = 7;
 };
@@ -90,6 +90,7 @@ private:
     // nest page
     Picker transform { "Fugal transform" }, gate { "Rhythm gate" };
     juce::ToggleButton mute { "Mute" }, solo { "Solo" };
+    juce::TextButton nestAll { "Nest chords 4-3-2-1" };
     std::vector<std::unique_ptr<Knob>> nestKnobs;
 };
 } // namespace mf

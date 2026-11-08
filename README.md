@@ -53,7 +53,7 @@ The subject generators include a fractal contour (midpoint displacement), a rand
 
 ### Download a build
 
-Every push runs the **Build macOS app** workflow (GitHub → Actions) on GitHub's hosted macOS runner. The workflow compiles a universal binary for macOS 11 and later, which covers Sonoma 14.6,, runs the tests and uploads `Matryoshka-Fugue-macOS.dmg` as an artifact. The DMG contains the app, the VST3 and AU plug-ins, and install notes.
+Every push runs the **Build macOS app** workflow (GitHub → Actions) on GitHub's hosted macOS runner. The workflow compiles a universal binary for macOS 11 and later, which covers Sonoma 14.6. It runs the tests and uploads `Matryoshka-Fugue-macOS.dmg` as an artifact. The DMG contains the app, the VST3 and AU plug-ins, and install notes.
 
 The app has an ad-hoc signature but is **not notarised**, so the first launch needs a right-click → **Open**. See [docs/INSTALL-macOS.txt](docs/INSTALL-macOS.txt).
 

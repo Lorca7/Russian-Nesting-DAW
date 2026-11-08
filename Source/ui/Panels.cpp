@@ -46,7 +46,7 @@ FugueLawPanel::FugueLawPanel (MatryoshkaProcessor& p) : proc (p), bind (p)
 
     bind.knob<float> (coupling, [] (Project& q) -> float& { return q.coupling; });
     coupling.slider.textFromValueFunction = [] (double v) { return v < 0.01 ? juce::String ("Strict canon") : pctText (v); };
-    coupling.setTooltip ("How far each doll rides on its parent's current note. 0 = strict canon, 100% = full fractal.");
+    coupling.slider.setTooltip ("How far each doll rides on its parent's current note. 0 = strict canon, 100% = full fractal.");
     bind.knob<double> (entryGap, [] (Project& q) -> double& { return q.entryGapBeats; });
     entryGap.slider.textFromValueFunction = [] (double v) { return juce::String (v, 1) + " beats"; };
     bind.toggle (fold, [] (Project& q) -> bool& { return q.fold; });
@@ -111,19 +111,20 @@ void FugueLawPanel::resized()
     ratio.setBounds (rr.removeFromLeft (rr.getWidth() / 2 - 4));
     rr.removeFromLeft (8);
     answer.setBounds (rr);
-    auto pr = row (42);
-    pulse.setBounds (pr.removeFromLeft (pr.getWidth() / 2 - 4));
-    pr.removeFromLeft (8);
-    echoTime.setBounds (pr);
-    auto kr = row (juce::jmin (78, r.getHeight() - 30));
-    auto toggles = kr.removeFromRight (kr.getWidth() - 150);
-    coupling.setBounds (kr.removeFromLeft (75));
-    entryGap.setBounds (kr);
-    fold.setBounds (toggles.removeFromTop (toggles.getHeight() / 2).reduced (0, 4));
-    stagger.setBounds (toggles.reduced (0, 4));
+    auto left = r.removeFromLeft (r.getWidth() / 2 + 6);
+    pulse.setBounds (left.removeFromTop (42));
+    left.removeFromTop (2);
+    fold.setBounds (left.removeFromTop (24));
+    stagger.setBounds (left.removeFromTop (24));
+    r.removeFromLeft (4);
+    auto knobs = r.withHeight (juce::jmin (r.getHeight(), 92));
+    coupling.setBounds (knobs.removeFromLeft (knobs.getWidth() / 2));
+    entryGap.setBounds (knobs);
 
     hall = hall.withTrimmedTop (30).reduced (10, 2);
-    layoutGrid (hall, { &revSize, &revLevel, &echoFb, &master }, 60, hall.getHeight());
+    echoTime.setBounds (hall.removeFromLeft (96).withSizeKeepingCentre (96, 42));
+    hall.removeFromLeft (6);
+    layoutGrid (hall, { &revSize, &revLevel, &echoFb, &master }, 44, hall.getHeight());
 }
 
 // ============================================================================ SubjectPanel
@@ -142,8 +143,6 @@ SubjectPanel::SubjectPanel (MatryoshkaProcessor& p) : proc (p), editor (p)
         });
         if (onEdited) onEdited();
     };
-    nest.setTooltip ("Largest doll plays 4-note chords, then 3, 2, and the smallest a single line.");
-    nest.onClick = [this] { proc.editProject ([] (Project& q) { nestChords (q); }); if (onEdited) onEdited(); };
 
     steps.setSliderStyle (juce::Slider::LinearHorizontal);
     steps.setRange (1, kMaxSteps, 1);
@@ -154,7 +153,7 @@ SubjectPanel::SubjectPanel (MatryoshkaProcessor& p) : proc (p), editor (p)
         proc.editProject ([&] (Project& q) { q.subjectLength = n; });
         if (onEdited) onEdited();
     };
-    for (juce::Component* c : std::initializer_list<juce::Component*> { &editor, &generator, &generate, &nest, &steps })
+    for (juce::Component* c : std::initializer_list<juce::Component*> { &editor, &generator, &generate, &steps })
         addAndMakeVisible (c);
 }
 
@@ -173,12 +172,10 @@ void SubjectPanel::resized()
 {
     auto r = getLocalBounds().withTrimmedTop (30).reduced (10, 6);
     auto top = r.removeFromTop (42);
-    generator.setBounds (top.removeFromLeft (160));
+    generator.setBounds (top.removeFromLeft (150));
     top.removeFromLeft (8);
-    generate.setBounds (top.removeFromLeft (90).withTrimmedTop (15));
-    top.removeFromLeft (8);
-    nest.setBounds (top.removeFromRight (150).withTrimmedTop (15));
-    top.removeFromRight (8);
+    generate.setBounds (top.removeFromLeft (86).withTrimmedTop (15));
+    top.removeFromLeft (12);
     steps.setBounds (top.withTrimmedTop (15));
     r.removeFromTop (6);
     editor.setBounds (r);
@@ -336,6 +333,8 @@ DollInspector::DollInspector (MatryoshkaProcessor& p) : proc (p), bind (p), benc
     bind.combo (gate.box, [this] (Project& q) -> int& { return q.dolls[(size_t) doll()].gate; });
     bind.toggle (mute, [this] (Project& q) -> bool& { return q.dolls[(size_t) doll()].mute; });
     bind.toggle (solo, [this] (Project& q) -> bool& { return q.dolls[(size_t) doll()].solo; });
+    nestAll.setTooltip ("For all dolls: the largest plays 4-note chords, then 3, 2, and the smallest a single line.");
+    nestAll.onClick = [this] { proc.editProject ([] (Project& q) { nestChords (q); }); refresh(); if (onEdited) onEdited(); };
     {
         auto octave = std::make_unique<Knob> ("Octave", 0, 7, 1);
         bind.knob<int> (*octave, [this] (Project& q) -> int& { return q.dolls[(size_t) doll()].octave; });
@@ -385,7 +384,7 @@ std::vector<juce::Component*> DollInspector::samplerComps()
 }
 std::vector<juce::Component*> DollInspector::nestComps()
 {
-    std::vector<juce::Component*> v { &transform, &gate, &mute, &solo };
+    std::vector<juce::Component*> v { &transform, &gate, &mute, &solo, &nestAll };
     for (auto& k : nestKnobs) v.push_back (k.get());
     return v;
 }
@@ -520,7 +519,9 @@ void DollInspector::resized()
         auto tg = top.withTrimmedTop (15);
         mute.setBounds (tg.removeFromLeft (tg.getWidth() / 2));
         solo.setBounds (tg);
-        r.removeFromTop (8);
+        r.removeFromTop (6);
+        nestAll.setBounds (r.removeFromBottom (26).removeFromLeft (180));
+        r.removeFromBottom (6);
         std::vector<juce::Component*> ks;
         for (auto& k : nestKnobs) ks.push_back (k.get());
         layoutGrid (r, ks, 76, juce::jmin (84, r.getHeight() / 2));

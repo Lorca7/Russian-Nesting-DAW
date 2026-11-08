@@ -89,8 +89,8 @@ MatryoshkaEditor::MatryoshkaEditor (MatryoshkaProcessor& p)
         addAndMakeVisible (c);
 
     setResizable (true, true);
-    setResizeLimits (1120, 760, 2400, 1600);
-    setSize (1320, 860);
+    setResizeLimits (1220, 740, 2600, 1700);
+    setSize (1280, 800);
     setWantsKeyboardFocus (true);
     refreshAll();
     startTime = juce::Time::getMillisecondCounterHiRes() * 0.001;
@@ -161,9 +161,9 @@ void MatryoshkaEditor::paint (juce::Graphics& g)
 
     // title cartouche
     auto top = getLocalBounds().removeFromTop (58).reduced (14, 6);
-    auto title = top.removeFromLeft (250);
+    auto title = top.removeFromLeft (226);
     g.setColour (gold);
-    g.setFont (display (24.0f));
+    g.setFont (display (22.0f));
     g.drawText ("Matryoshka Fugue", title.removeFromTop (28), juce::Justification::bottomLeft);
     g.setColour (cinnabar.brighter (0.3f));
     g.setFont (body (12.0f));
@@ -193,13 +193,13 @@ void MatryoshkaEditor::resized()
 {
     auto r = getLocalBounds();
     auto top = r.removeFromTop (58).reduced (14, 8);
-    top.removeFromLeft (256);
+    top.removeFromLeft (232);
     top.removeFromRight (16); // meter
     auto place = [&] (juce::Component& c, int w) { c.setBounds (top.removeFromLeft (w).withTrimmedTop (14)); top.removeFromLeft (6); };
     place (rewindButton, 36);
     place (playButton, 72);
     place (recordButton, 88);
-    tempo.setBounds (top.removeFromLeft (190).withTrimmedTop (14));
+    tempo.setBounds (top.removeFromLeft (150).withTrimmedTop (14));
     top.removeFromLeft (12);
     exportLength.setBounds (top.removeFromLeft (96));
     top.removeFromLeft (6);
@@ -218,16 +218,17 @@ void MatryoshkaEditor::resized()
         revealButton.setBounds (statusRow.removeFromRight (120).reduced (0, 2));
     status.setBounds (statusRow);
 
-    const int shelfH = juce::jlimit (200, 300, (int) (r.getHeight() * 0.32));
-    shelf.setBounds (r.removeFromTop (shelfH));
-    r.removeFromTop (4);
-    roll.setBounds (r.removeFromTop (juce::jlimit (90, 170, (int) (r.getHeight() * 0.22))));
+    // dolls on the left, the nesting roll beside them
+    auto stage = r.removeFromTop (juce::jlimit (230, 380, (int) (r.getHeight() * 0.36)));
+    shelf.setBounds (stage.removeFromLeft ((int) (stage.getWidth() * 0.55f)));
+    stage.removeFromLeft (8);
+    roll.setBounds (stage.withTrimmedBottom (6));
     r.removeFromTop (8);
 
     auto bottom = r.withTrimmedBottom (4);
     law.setBounds (bottom.removeFromLeft (300));
     bottom.removeFromLeft (8);
-    inspector.setBounds (bottom.removeFromRight (juce::jlimit (500, 640, bottom.getWidth() / 2)));
+    inspector.setBounds (bottom.removeFromRight (juce::jlimit (500, 660, bottom.getWidth() / 2)));
     bottom.removeFromRight (8);
     subject.setBounds (bottom);
 }
