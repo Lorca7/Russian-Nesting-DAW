@@ -1,0 +1,46 @@
+name: Build macOS app
+
+on:
+  push:
+    branches: [main, "claude/**"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  macos:
+    # macOS 14 Sonoma runner (Apple silicon). The build is universal (arm64 + x86_64).
+    runs-on: macos-14
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build --config Release -j 4
+
+      - name: Test (engine + headless audio/MIDI/WAV render)
+        run: ctest --test-dir build --output-on-failure -C Release
+
+      - name: Package
+        run: |
+          set -e
+          ART="build/MatryoshkaFugue_artefacts/Release"
+          mkdir -p "dist/Matryoshka Fugue/Plug-ins"
+          cp -R "$ART/Standalone/Matryoshka Fugue.app" "dist/Matryoshka Fugue/"
+          cp -R "$ART/VST3/Matryoshka Fugue.vst3" "dist/Matryoshka Fugue/Plug-ins/"
+          cp -R "$ART/AU/Matryoshka Fugue.component" "dist/Matryoshka Fugue/Plug-ins/"
+          # Ad-hoc signature so Apple silicon will run it; it is not notarised (see README).
+          codesign --force --deep --sign - "dist/Matryoshka Fugue/Matryoshka Fugue.app"
+          codesign --force --deep --sign - "dist/Matryoshka Fugue/Plug-ins/Matryoshka Fugue.vst3"
+          codesign --force --deep --sign - "dist/Matryoshka Fugue/Plug-ins/Matryoshka Fugue.component"
+          cp docs/INSTALL-macOS.txt "dist/Matryoshka Fugue/READ ME FIRST.txt"
+          lipo -info "dist/Matryoshka Fugue/Matryoshka Fugue.app/Contents/MacOS/Matryoshka Fugue"
+          hdiutil create -volname "Matryoshka Fugue" -srcfolder "dist/Matryoshka Fugue" -ov -format UDZO "dist/Matryoshka-Fugue-macOS.dmg"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Matryoshka-Fugue-macOS
+          path: dist/Matryoshka-Fugue-macOS.dmg
+          if-no-files-found: error

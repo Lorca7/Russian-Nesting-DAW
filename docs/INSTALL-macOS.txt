@@ -1,0 +1,17 @@
+MATRYOSHKA FUGUE - installing on macOS (Sonoma 14.6 and later; Apple silicon or Intel)
+
+1. Drag "Matryoshka Fugue.app" into your Applications folder.
+
+2. The app is not notarised by Apple, so the first launch needs one extra step:
+   - Right-click (or Control-click) the app and choose Open, then click Open again.
+   - If macOS still refuses ("damaged" or "can't be opened"), open Terminal and run:
+       xattr -dr com.apple.quarantine "/Applications/Matryoshka Fugue.app"
+
+3. Optional plug-ins for your DAW (in the Plug-ins folder):
+   - Matryoshka Fugue.vst3       -> ~/Library/Audio/Plug-Ins/VST3/
+   - Matryoshka Fugue.component  -> ~/Library/Audio/Plug-Ins/Components/   (Logic, GarageBand)
+   Run the same xattr command on each if your DAW refuses to load them.
+
+Audio output: in the app, click "Options" (top-left of the window) > Audio/MIDI Settings.
+
+Recordings and exports go to  ~/Music/Matryoshka Fugue/  by default.
