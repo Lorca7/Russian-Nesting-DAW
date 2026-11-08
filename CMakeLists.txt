@@ -51,7 +51,7 @@ set(MF_ENGINE_SOURCES
     Source/engine/Presets.cpp
     Source/engine/Project.cpp)
 
-target_sources(MatryoshkaFugue PRIVATE
+set(MF_APP_SOURCES
     ${MF_ENGINE_SOURCES}
     Source/dsp/BuiltInSamples.cpp
     Source/dsp/Voices.cpp
@@ -66,6 +66,8 @@ target_sources(MatryoshkaFugue PRIVATE
     Source/ui/Panels.cpp
     Source/PluginProcessor.cpp
     Source/PluginEditor.cpp)
+
+target_sources(MatryoshkaFugue PRIVATE ${MF_APP_SOURCES})
 
 target_compile_definitions(MatryoshkaFugue PUBLIC
     JUCE_WEB_BROWSER=0
@@ -102,4 +104,13 @@ if(MF_BUILD_TESTS)
     target_link_libraries(RenderTests PRIVATE juce::juce_audio_formats juce::juce_audio_basics juce::juce_core
                                       PUBLIC juce::juce_recommended_config_flags)
     add_test(NAME RenderTests COMMAND RenderTests)
+endif()
+
+option(MF_BUILD_SNAPSHOT "Build the offscreen UI snapshot tool (CI)" OFF)
+if(MF_BUILD_SNAPSHOT)
+    juce_add_console_app(UISnapshot PRODUCT_NAME "UISnapshot")
+    target_sources(UISnapshot PRIVATE tests/UISnapshot.cpp ${MF_APP_SOURCES})
+    target_compile_definitions(UISnapshot PRIVATE JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JUCE_MODAL_LOOPS_PERMITTED=1)
+    target_link_libraries(UISnapshot PRIVATE juce::juce_audio_utils juce::juce_audio_formats juce::juce_dsp
+                                     PUBLIC juce::juce_recommended_config_flags)
 endif()

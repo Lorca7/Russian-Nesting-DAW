@@ -57,10 +57,19 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y libasound2-dev libfreetype-dev libfontconfig1-dev libx11-dev libxrandr-dev \
-            libxinerama-dev libxcursor-dev libxcomposite-dev libxext-dev libgl1-mesa-dev ninja-build
+            libxinerama-dev libxcursor-dev libxcomposite-dev libxext-dev libgl1-mesa-dev ninja-build xvfb fonts-dejavu
       - name: Configure
-        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DMF_BUILD_SNAPSHOT=ON
       - name: Build
         run: cmake --build build -j 4
       - name: Test
         run: ctest --test-dir build --output-on-failure
+      - name: Render UI snapshots
+        run: |
+          SNAP=$(find build -type f -name UISnapshot -perm -u+x | head -1)
+          xvfb-run -a -s "-screen 0 1920x1200x24" "$SNAP" ui-snapshots
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ui-snapshots
+          path: ui-snapshots/*.png
+          if-no-files-found: error
