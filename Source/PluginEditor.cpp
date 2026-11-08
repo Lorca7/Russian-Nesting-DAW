@@ -69,7 +69,6 @@ MatryoshkaEditor::MatryoshkaEditor (MatryoshkaProcessor& p)
     saveButton.onClick = [this] { saveProject(); };
     folderButton.onClick = [] { defaultOutputFolder().revealToUser(); };
     revealButton.onClick = [this] { if (revealTarget.exists()) revealTarget.revealToUser(); };
-    revealButton.setVisible (false);
 
     status.setFont (body (12.5f));
     status.setColour (juce::Label::textColourId, creamDim);
@@ -87,6 +86,7 @@ MatryoshkaEditor::MatryoshkaEditor (MatryoshkaProcessor& p)
                                                                          &folderButton, &status, &revealButton, &shelf, &roll, &law,
                                                                          &subject, &inspector })
         addAndMakeVisible (c);
+    revealButton.setVisible (false); // shown once there is a file to reveal
 
     setResizable (true, true);
     setResizeLimits (1220, 740, 2600, 1700);

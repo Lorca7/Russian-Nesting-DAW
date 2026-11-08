@@ -92,5 +92,6 @@ Source/engine/   pure C++ fractal-fugue engine, scales, presets (no JUCE; unit t
 Source/dsp/      synth and sampler voices, filters, per-doll effects, the mixing engine, built-in samples
 Source/io/       project XML, MIDI file export, offline WAV render
 Source/ui/       the matryoshka look: painted dolls, piano roll, subject grid, panels
-tests/           EngineTests (engine) and RenderTests (headless audio / MIDI / WAV rendering)
+tests/           EngineTests (engine), RenderTests (headless audio / MIDI / WAV rendering),
+                 UISnapshot (renders the window offscreen; CI uploads the PNGs as an artifact)
 ```

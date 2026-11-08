@@ -73,7 +73,7 @@ private:
     Page page = SynthPage;
 
     juce::TextButton playsSynth { "Synth" }, playsSampler { "Sampler" };
-    juce::TextButton pageSynth { "Synth" }, pageSampler { "Sampler" }, pageNest { "Nest & Mix" };
+    juce::TextButton pageSynth { "Synth" }, pageSampler { "Sampler" }, pageNest { "Nest & Mix" }; // which page to edit
 
     // synth page
     Picker preset { "Preset (by era)" }, wave1 { "Osc 1" }, wave2 { "Osc 2" }, filter { "Filter" };

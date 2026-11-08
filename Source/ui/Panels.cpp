@@ -165,7 +165,7 @@ void SubjectPanel::update (const Project& p)
 
 void SubjectPanel::paint (juce::Graphics& g)
 {
-    drawPanel (g, getLocalBounds(), "The Subject", juce::CharPointer_UTF8 ("\xD0\xA2\xD0\xB5\xD0\xBC\xD0\xB0 \xC2\xB7 click to write, click a note for a rest, bottom row = length & velocity"));
+    drawPanel (g, getLocalBounds(), "The Subject", juce::CharPointer_UTF8 ("\xD0\xA2\xD0\xB5\xD0\xBC\xD0\xB0 \xC2\xB7 click: note / rest \xC2\xB7 bottom row: length, drag for velocity"));
 }
 
 void SubjectPanel::resized()
@@ -459,22 +459,26 @@ void DollInspector::paint (juce::Graphics& g)
     juce::ignoreUnused (r);
     g.setColour (creamDim);
     g.setFont (body (11.0f));
-    g.drawText ("Plays", getLocalBounds().withTrimmedTop (30).reduced (12, 6).removeFromTop (26), juce::Justification::centredLeft);
+    auto head = getLocalBounds().withTrimmedTop (30).reduced (12, 6).removeFromTop (26);
+    g.drawText ("Plays", head, juce::Justification::centredLeft);
+    g.drawText ("Edit", pageSynth.getBounds().withX (pageSynth.getX() - 34).withWidth (30), juce::Justification::centredRight);
+    g.setColour (goldDim);
+    g.drawVerticalLine (pageSynth.getX() - 40, (float) head.getY() + 3.0f, (float) head.getBottom() - 3.0f);
 }
 
 void DollInspector::resized()
 {
     auto r = getLocalBounds().withTrimmedTop (30).reduced (12, 6);
     auto head = r.removeFromTop (26);
-    head.removeFromLeft (40);
-    playsSynth.setBounds (head.removeFromLeft (76));
+    head.removeFromLeft (38);
+    playsSynth.setBounds (head.removeFromLeft (68));
     head.removeFromLeft (4);
     playsSampler.setBounds (head.removeFromLeft (76));
-    pageNest.setBounds (head.removeFromRight (96));
+    pageNest.setBounds (head.removeFromRight (90));
     head.removeFromRight (4);
-    pageSampler.setBounds (head.removeFromRight (76));
+    pageSampler.setBounds (head.removeFromRight (74));
     head.removeFromRight (4);
-    pageSynth.setBounds (head.removeFromRight (64));
+    pageSynth.setBounds (head.removeFromRight (62));
     r.removeFromTop (8);
 
     if (page == SynthPage)
