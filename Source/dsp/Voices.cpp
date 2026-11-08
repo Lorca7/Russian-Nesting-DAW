@@ -128,8 +128,8 @@ void SamplerVoice::start (const SampleData* s, const SamplerParams& params, int 
     startPos = std::clamp (startFraction, 0.0, 1.0) * n;
     endPos = endFraction > 0.0 ? std::clamp (endFraction, 0.0, 1.0) * n : n;
     if (endPos <= startPos + 8) endPos = n;
-    if (p.reverse) { std::swap (startPos, endPos); inc = -inc; }
     pos = startPos;
+    if (p.reverse) { pos = endPos - 1.0; inc = -inc; }
     env.set (std::max (0.001f, p.attack), 0.05f, 1.0f, std::max (0.005f, p.release), sr);
     env.value = 0;
     env.noteOn();
@@ -142,7 +142,7 @@ void SamplerVoice::render (float* out, int numSamples)
     if (! isActive())
         return;
     const auto& d = sample->data;
-    const double lo = std::min (startPos, endPos), hi = std::max (startPos, endPos);
+    const double lo = startPos, hi = endPos;
     for (int i = 0; i < numSamples; ++i)
     {
         if (gateLeft > 0 && --gateLeft == 0) env.noteOff();

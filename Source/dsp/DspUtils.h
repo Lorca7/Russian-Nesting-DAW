@@ -74,11 +74,12 @@ struct SVF
     }
 };
 
-/** Four-pole transistor-ladder style low-pass with tanh input stage. */
+/** Four-pole transistor-ladder style low-pass: four trapezoidal one-poles with a tanh input stage
+    and unit-delay resonance feedback. */
 struct Ladder
 {
-    float s[4] {}, g = 0.5f, fb = 0.0f;
-    void reset() { std::fill (std::begin (s), std::end (s), 0.0f); }
+    float s[4] {}, g = 0.5f, fb = 0.0f, last = 0.0f;
+    void reset() { std::fill (std::begin (s), std::end (s), 0.0f); last = 0.0f; }
     void set (float cutoff, float res, float sampleRate)
     {
         const float fc = std::clamp (cutoff, 16.0f, sampleRate * 0.42f);
@@ -88,12 +89,16 @@ struct Ladder
     }
     float process (float x)
     {
-        const float u = fastTanh (x - fb * s[3]);
-        s[0] += 2.0f * g * (u - s[0]);
-        s[1] += 2.0f * g * (s[0] - s[1]);
-        s[2] += 2.0f * g * (s[1] - s[2]);
-        s[3] += 2.0f * g * (s[2] - s[3]);
-        return s[3] * (1.0f + 0.45f * fb);
+        float in = fastTanh (x - fb * last);
+        for (auto& st : s)
+        {
+            const float v = g * (in - st);
+            const float y = v + st;
+            st = y + v;
+            in = y;
+        }
+        last = in;
+        return in * (1.0f + 0.45f * fb);
     }
 };
 
