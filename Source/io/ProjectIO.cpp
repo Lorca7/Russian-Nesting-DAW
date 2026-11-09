@@ -31,7 +31,8 @@ template <typename V, typename S> void visitSynth (V& v, S& s)
     v.f ("envAmt", s.envAmount); v.f ("keyTrack", s.keyTrack); v.f ("ampA", s.ampA); v.f ("ampD", s.ampD);
     v.f ("ampS", s.ampS); v.f ("ampR", s.ampR); v.f ("filA", s.filA); v.f ("filD", s.filD); v.f ("filS", s.filS);
     v.f ("filR", s.filR); v.f ("vibRate", s.vibratoRate); v.f ("vibDepth", s.vibratoDepth); v.f ("drift", s.drift);
-    v.f ("level", s.level);
+    v.f ("level", s.level); v.f ("unison", s.unison); v.f ("unisonSpread", s.unisonSpread);
+    v.f ("glide", s.glide); v.f ("sync", s.sync);
 }
 template <typename V, typename S> void visitSampler (V& v, S& s)
 {
@@ -45,6 +46,7 @@ template <typename V, typename D> void visitDoll (V& v, D& d)
     v.f ("chord", d.chordSize); v.f ("legato", d.legato); v.f ("volume", d.volume); v.f ("pan", d.pan);
     v.f ("drive", d.drive); v.f ("chorus", d.chorus); v.f ("wow", d.wow); v.f ("reverbSend", d.reverbSend);
     v.f ("echoSend", d.echoSend); v.f ("mute", d.mute); v.f ("solo", d.solo);
+    v.f ("ensemble", d.ensemble); v.f ("crush", d.crush); v.f ("age", d.age);
 }
 template <typename V, typename P> void visitProject (V& v, P& p)
 {
@@ -104,7 +106,7 @@ void projectFromXml (const juce::XmlElement& xml, Project& p)
             if (i >= kMaxSteps) break;
             auto& st = p.subject[(size_t) i++];
             st.degree = s->getIntAttribute ("degree", st.degree);
-            st.length = juce::jlimit (1, 8, s->getIntAttribute ("length", st.length));
+            st.length = juce::jlimit (1, 13, s->getIntAttribute ("length", st.length));
             st.velocity = (float) s->getDoubleAttribute ("velocity", st.velocity);
             st.on = s->getIntAttribute ("on", st.on ? 1 : 0) != 0;
         }

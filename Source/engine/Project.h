@@ -10,10 +10,10 @@ constexpr int kMaxChord = 4;
 
 // All enums are stored as plain ints inside Project so the whole struct stays trivially copyable
 // (the audio thread copies it without allocating).
-namespace Wave       { enum { Saw, Square, Pulse, Triangle, Sine, Off, count }; }
+namespace Wave       { enum { Saw, Square, Pulse, Triangle, Sine, Off, Organ, count }; }
 namespace FilterType { enum { Ladder24, SEM12, Polivoks, HighPass, BandPass, count }; }
 namespace Transform  { enum { Prime, Inversion, Retrograde, RetroInversion, count }; }
-namespace Gate       { enum { All, Cantor, Sierpinski, Fibonacci, count }; }
+namespace Gate       { enum { All, Cantor, Sierpinski, Fibonacci, Drone, count }; }
 namespace Source     { enum { Synth, Sampler, count }; }
 namespace SampleMode { enum { Pitched, Slice, Scrub, count }; }
 namespace Ratio      { enum { Octave, Fifth, Golden, Twelfth, Fourth, Tritone, count }; }
@@ -52,6 +52,10 @@ struct SynthParams
     float vibratoDepth = 0.0f; // cents
     float drift = 3.0f;        // cents of analogue instability
     float level = 0.7f;
+    int unison = 1;            // stacked oscillators per voice (1..7): string machines, ANS clusters
+    float unisonSpread = 12.0f;// cents between the outermost unison voices
+    float glide = 0.0f;        // portamento time in seconds (theremin, mono leads)
+    bool sync = false;         // osc 2 hard-synced to osc 1
 };
 
 struct SamplerParams
@@ -84,6 +88,9 @@ struct DollSettings
     float drive = 0.0f;
     float chorus = 0.0f;
     float wow = 0.0f;
+    bool ensemble = false;     // three-phase string-machine ensemble instead of the two-tap chorus
+    float crush = 0.0f;        // cheap 80s digital: sample-rate and bit reduction
+    float age = 0.0f;          // tape / vinyl age: dull top end, saturation, signal-following hiss
     float reverbSend = 0.25f;
     float echoSend = 0.0f;
     bool mute = false;

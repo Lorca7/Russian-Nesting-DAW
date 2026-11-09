@@ -1,6 +1,7 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 #include "engine/Presets.h"
+#include "engine/Scores.h"
 #include "io/ProjectIO.h"
 
 MatryoshkaProcessor::MatryoshkaProcessor()
@@ -10,10 +11,9 @@ MatryoshkaProcessor::MatryoshkaProcessor()
     project = mf::makeDefaultProject();
     audioProject = project;
 
-    for (int i = 0; i < (int) mf::builtInSamples().size() && i < 4; ++i)
-        builtIns[(size_t) i] = addToLibrary (std::make_unique<mf::SampleData> (mf::makeBuiltInSample (i)));
+    builtIns.assign (mf::builtInSamples().size(), nullptr);
     for (int d = 0; d < mf::kNumDolls; ++d)
-        currentSamples[(size_t) d] = builtIns[0];
+        currentSamples[(size_t) d] = builtIn (0);
 
     writerThread.startThread();
     startTimerHz (30);
@@ -219,14 +219,43 @@ void MatryoshkaProcessor::timerCallback()
 }
 
 // ===================================================================================== samples
+const mf::SampleData* MatryoshkaProcessor::builtIn (int index)
+{
+    index = juce::jlimit (0, (int) builtIns.size() - 1, index);
+    if (builtIns[(size_t) index] == nullptr)
+        builtIns[(size_t) index] = addToLibrary (std::make_unique<mf::SampleData> (mf::makeBuiltInSample (index)));
+    return builtIns[(size_t) index];
+}
+
 void MatryoshkaProcessor::useBuiltInSample (int doll, int index)
 {
-    index = juce::jlimit (0, 3, index);
-    currentSamples[(size_t) doll] = builtIns[(size_t) index];
+    index = juce::jlimit (0, (int) builtIns.size() - 1, index);
+    currentSamples[(size_t) doll] = builtIn (index);
     sampleBuiltInIndex[(size_t) doll] = index;
     sampleFilePaths[(size_t) doll].clear();
-    const int root = mf::builtInSamples()[(size_t) index].rootNote;
-    editProject ([&] (mf::Project& p) { p.dolls[(size_t) doll].sampler.rootNote = root; });
+    const auto& info = mf::builtInSamples()[(size_t) index];
+    editProject ([&] (mf::Project& p) {
+        auto& s = p.dolls[(size_t) doll].sampler;
+        s.rootNote = info.rootNote;
+        s.pitchFollow = ! info.percussive;
+    });
+}
+
+void MatryoshkaProcessor::loadScore (int scoreIndex)
+{
+    const auto& all = mf::scores();
+    if (scoreIndex < 0 || scoreIndex >= (int) all.size())
+        return;
+    const auto& sc = all[(size_t) scoreIndex];
+    replaceProject (sc.project);
+    for (int d = 0; d < mf::kNumDolls; ++d)
+        if (sc.samples[(size_t) d] >= 0)
+        {
+            const auto keep = sc.project.dolls[(size_t) d].sampler;
+            useBuiltInSample (d, sc.samples[(size_t) d]);
+            editProject ([&] (mf::Project& p) { p.dolls[(size_t) d].sampler = keep; });
+        }
+    rewind();
 }
 
 bool MatryoshkaProcessor::loadSampleFile (int doll, const juce::File& file, juce::String& error)

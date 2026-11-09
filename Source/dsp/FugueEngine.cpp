@@ -23,6 +23,9 @@ void DollTrack::reset()
     wowLine.clear();
     chorusLine.clear();
     scrubPos = 0.0;
+    lastSynthHz = 0;
+    ageLp = ageEnv = crushHold = 0;
+    crushCount = 0;
 }
 
 int DollTrack::activeVoices() const
@@ -58,7 +61,9 @@ void DollTrack::trigger (const Project& p, int doll, const SampleData* sample, c
         {
             auto& v = pickVoice (synths);
             v.order = ++orderCounter;
-            v.start (d.synth, e.notes[c], e.velocity * chordGain, gate, seedCounter++);
+            const float from = (e.numNotes == 1 && d.synth.glide > 0.0005f) ? lastSynthHz : 0.0f;
+            v.start (d.synth, e.notes[c], e.velocity * chordGain, gate, seedCounter++, from);
+            if (c == 0) lastSynthHz = dsp::midiToHz ((float) e.notes[0]);
         }
         else
         {
@@ -100,7 +105,13 @@ void DollTrack::processFx (const DollSettings& d, bool audible, int num,
     const float panL = std::cos (panAngle), panR = std::sin (panAngle);
     const float driveGain = 1.0f + d.drive * 8.0f;
     const float msec = (float) sr * 0.001f;
-    const float wowInc = 0.55f / (float) sr, flutterInc = 6.5f / (float) sr, chorusInc = 0.45f / (float) sr;
+    const float wowInc = 0.55f / (float) sr, flutterInc = 6.5f / (float) sr, chorusInc = (d.ensemble ? 0.6f : 0.45f) / (float) sr;
+    const float vibInc = 6.3f / (float) sr;
+    const int crushHoldLen = 1 + (int) (d.crush * 11.0f);
+    const float crushSteps = std::pow (2.0f, 15.0f - d.crush * 11.0f);
+    const float ageCoef = 1.0f - std::exp (-twoPi * (18000.0f - d.age * 14500.0f) / (float) sr);
+    const float envRel = std::exp (-1.0f / (0.15f * (float) sr));
+    constexpr float third = 1.0f / 3.0f;
 
     for (int i = 0; i < num; ++i)
     {
@@ -108,6 +119,22 @@ void DollTrack::processFx (const DollSettings& d, bool audible, int num,
 
         if (d.drive > 0.001f)
             x = (1.0f - d.drive) * x + d.drive * 0.7f * fastTanh (x * driveGain);
+
+        if (d.crush > 0.001f)
+        {
+            if (crushCount++ % crushHoldLen == 0)
+                crushHold = std::round (x * crushSteps) / crushSteps;
+            x = crushHold;
+        }
+
+        if (d.age > 0.001f)
+        {
+            ageEnv = std::max (std::abs (x), ageEnv * envRel);
+            x = fastTanh (x * (1.0f + d.age)) / (1.0f + 0.5f * d.age);
+            x += hissRng.bipolar() * d.age * 0.06f * ageEnv;
+            ageLp += ageCoef * (x - ageLp);
+            x = ageLp;
+        }
 
         wowLine.push (x);
         if (d.wow > 0.001f)
@@ -120,7 +147,21 @@ void DollTrack::processFx (const DollSettings& d, bool audible, int num,
 
         chorusLine.push (x);
         float l = x, r = x;
-        if (d.chorus > 0.001f)
+        if (d.chorus > 0.001f && d.ensemble)
+        {
+            // String-machine ensemble: three delay taps, each swept by a slow and a fast LFO 120 degrees apart.
+            float taps[3];
+            for (int k = 0; k < 3; ++k)
+            {
+                const float off = (float) k * third;
+                const float slow = std::sin (twoPi * (chorusPhase + off)), fast = std::sin (twoPi * (vibPhase + off));
+                taps[k] = chorusLine.read ((7.0f + 2.6f * slow + 0.3f * fast) * msec);
+            }
+            const float dry = 1.0f - 0.6f * d.chorus;
+            l = dry * x + d.chorus * 0.7f * (taps[0] + 0.5f * taps[1]);
+            r = dry * x + d.chorus * 0.7f * (taps[2] + 0.5f * taps[1]);
+        }
+        else if (d.chorus > 0.001f)
         {
             const float a = std::sin (twoPi * chorusPhase), b = std::cos (twoPi * chorusPhase);
             const float wl = chorusLine.read ((9.0f + 3.0f * a) * msec);
@@ -130,6 +171,7 @@ void DollTrack::processFx (const DollSettings& d, bool audible, int num,
             r = dry * x + d.chorus * 0.8f * wr;
         }
         chorusPhase += chorusInc; chorusPhase -= std::floor (chorusPhase);
+        vibPhase += vibInc; vibPhase -= std::floor (vibPhase);
 
         gainSmoothed += (target - gainSmoothed) * smooth;
         l *= gainSmoothed * panL * 1.41f;

@@ -24,9 +24,8 @@ Project::Project()
 
 static const SynthPreset* presetNamed (const char* name)
 {
-    for (auto& p : synthPresets())
-        if (p.name == name)
-            return &p;
+    if (const auto* p = findPreset (name))
+        return p;
     return &synthPresets().front();
 }
 
@@ -35,21 +34,21 @@ Project makeDefaultProject()
     Project p;
 
     auto& big = p.dolls[0];
-    applyPreset (big, *presetNamed ("Modular Bass"));
+    applyPreset (big, *presetNamed ("Estradin Fat Bass"));
     big.octave = 2; big.reverbSend = 0.12f; big.volume = 0.75f;
 
     auto& mid = p.dolls[1];
-    applyPreset (mid, *presetNamed ("String Ensemble"));
+    applyPreset (mid, *presetNamed ("VIA String Ensemble"));
     mid.octave = 3; mid.chordSize = 2; mid.pan = -0.2f; mid.reverbSend = 0.35f; mid.volume = 0.55f;
 
     auto& small = p.dolls[2];
     small.source = Source::Sampler;
     small.sampler.rootNote = builtInSamples()[0].rootNote;
     small.octave = 4; small.pan = 0.3f; small.reverbSend = 0.25f; small.volume = 0.7f;
-    applyPreset (small, *presetNamed ("Mono Lead"));
+    applyPreset (small, *presetNamed ("Kosmos Mono Lead"));
 
     auto& tiny = p.dolls[3];
-    applyPreset (tiny, *presetNamed ("FM Glass Bell"));
+    applyPreset (tiny, *presetNamed ("Estrada FM Bells"));
     tiny.octave = 5; tiny.gate = Gate::Fibonacci; tiny.pan = -0.35f; tiny.echoSend = 0.3f; tiny.reverbSend = 0.4f; tiny.volume = 0.45f;
 
     return p;

@@ -1,5 +1,6 @@
 #include "Panels.h"
 #include "../engine/Presets.h"
+#include "../engine/Scores.h"
 
 namespace mf
 {
@@ -15,6 +16,21 @@ FugueLawPanel::FugueLawPanel (MatryoshkaProcessor& p) : proc (p), bind (p)
 {
     bind.onEdited = [this] { if (onEdited) onEdited(); };
 
+    {
+        std::string group;
+        const auto& all = scores();
+        for (size_t i = 0; i < all.size(); ++i)
+        {
+            if (all[i].group != group) { score.box.addSectionHeading (all[i].group); group = all[i].group; }
+            score.box.addItem (all[i].name, (int) i + 1);
+        }
+        score.box.setTextWhenNothingSelected ("Choose a score...");
+        score.box.setTooltip ("Each score sets the key, scale, fractal law, subject and every doll's sound, after a piece of Russian music.");
+        score.box.onChange = [this] {
+            const int i = score.box.getSelectedId() - 1;
+            if (i >= 0 && onLoadScore) onLoadScore (i);
+        };
+    }
     for (int i = 0; i < 12; ++i) key.box.addItem (noteName (i), i + 1);
     std::string lastGroup;
     for (int i = 0; i < numScales(); ++i)
@@ -66,7 +82,7 @@ FugueLawPanel::FugueLawPanel (MatryoshkaProcessor& p) : proc (p), bind (p)
     scaleNote.setJustificationType (juce::Justification::topLeft);
     scaleNote.setMinimumHorizontalScale (1.0f);
 
-    for (juce::Component* c : std::initializer_list<juce::Component*> { &key, &scale, &ratio, &answer, &pulse, &echoTime, &coupling, &entryGap,
+    for (juce::Component* c : std::initializer_list<juce::Component*> { &score, &key, &scale, &ratio, &answer, &pulse, &echoTime, &coupling, &entryGap,
                                                                          &fold, &stagger, &revSize, &revLevel, &echoFb, &master, &scaleNote })
         addAndMakeVisible (c);
     refresh();
@@ -102,11 +118,12 @@ void FugueLawPanel::resized()
     r = r.withTrimmedBottom (6).withTrimmedTop (30).reduced (10, 2);
 
     auto row = [&] (int h) { auto x = r.removeFromTop (h); r.removeFromTop (4); return x; };
+    score.setBounds (row (42));
     auto two = row (42);
     key.setBounds (two.removeFromLeft (70));
     two.removeFromLeft (8);
     scale.setBounds (two);
-    scaleNote.setBounds (row (32));
+    scaleNote.setBounds (row (30));
     auto rr = row (42);
     ratio.setBounds (rr.removeFromLeft (rr.getWidth() / 2 - 4));
     rr.removeFromLeft (8);
@@ -211,8 +228,9 @@ DollInspector::DollInspector (MatryoshkaProcessor& p) : proc (p), bind (p), benc
         proc.editProject ([&] (Project& q) { applyPreset (q.dolls[(size_t) doll()], synthPresets()[(size_t) i]); });
         refresh();
         if (onEdited) onEdited();
+        if (onStatus) onStatus (juce::String (synthPresets()[(size_t) i].name) + " (" + synthPresets()[(size_t) i].era + "): " + synthPresets()[(size_t) i].note);
     };
-    const char* waves[] = { "Saw", "Square", "Pulse (PWM)", "Triangle", "Sine (FM)", "Off" };
+    const char* waves[] = { "Saw", "Square", "Pulse (PWM)", "Triangle", "Sine (FM)", "Off", "Organ (drawbars)" };
     for (int i = 0; i < Wave::count; ++i) { wave1.box.addItem (waves[i], i + 1); wave2.box.addItem (waves[i], i + 1); }
     const char* filters[] = { "Ladder 24 dB", "SEM 12 dB", "Polivoks (gritty)", "High-pass", "Band-pass" };
     for (int i = 0; i < FilterType::count; ++i) filter.box.addItem (filters[i], i + 1);
@@ -254,6 +272,8 @@ DollInspector::DollInspector (MatryoshkaProcessor& p) : proc (p), bind (p), benc
         { "Vibrato", 0, 60, 0, 0, &SynthParams::vibratoDepth, cents },
         { "Drift", 0, 20, 0, 0, &SynthParams::drift, cents },
         { "Level", 0, 1, 0, 0, &SynthParams::level, pctText },
+        { "Unison spread", 0, 60, 0, 0, &SynthParams::unisonSpread, cents },
+        { "Glide", 0, 1, 0, 0.15, &SynthParams::glide, secText },
     };
     for (auto& k : synthSpec)
     {
@@ -263,9 +283,23 @@ DollInspector::DollInspector (MatryoshkaProcessor& p) : proc (p), bind (p), benc
         bind.knob<float> (*knob, [this, field] (Project& q) -> float& { return q.dolls[(size_t) doll()].synth.*field; });
         synthKnobs.push_back (std::move (knob));
     }
+    {
+        auto uni = std::make_unique<Knob> ("Unison", 1, 7, 1);
+        uni->slider.textFromValueFunction = [] (double v) { return juce::String ((int) v) + ((int) v == 1 ? " voice" : " voices"); };
+        bind.knob<int> (*uni, [this] (Project& q) -> int& { return q.dolls[(size_t) doll()].synth.unison; });
+        synthKnobs.insert (synthKnobs.end() - 2, std::move (uni));
+    }
+    bind.toggle (sync, [this] (Project& q) -> bool& { return q.dolls[(size_t) doll()].synth.sync; });
+    sync.setTooltip ("Restart oscillator 2 every cycle of oscillator 1: the tearing 80s sync lead.");
 
     // ---- sampler page
-    for (size_t i = 0; i < builtInSamples().size(); ++i) builtIn.box.addItem (builtInSamples()[i].name, (int) i + 1);
+    for (const char* group : { "Strings", "Winds & reeds", "Voices", "Bells", "Percussion" })
+    {
+        builtIn.box.addSectionHeading (group);
+        for (size_t i = 0; i < builtInSamples().size(); ++i)
+            if (std::string (builtInSamples()[i].group) == group)
+                builtIn.box.addItem (builtInSamples()[i].name, (int) i + 1);
+    }
     builtIn.box.setTextWhenNothingSelected ("Your own file");
     builtIn.box.onChange = [this] {
         const int i = builtIn.box.getSelectedId() - 1;
@@ -327,12 +361,14 @@ DollInspector::DollInspector (MatryoshkaProcessor& p) : proc (p), bind (p), benc
     // ---- nest page
     const char* transforms[] = { "Prime (as written)", "Inversion (mirror)", "Retrograde (backwards)", "Retrograde inversion" };
     for (int i = 0; i < Transform::count; ++i) transform.box.addItem (transforms[i], i + 1);
-    const char* gates[] = { "Every note", "Cantor set", "Sierpinski triangle", "Fibonacci word" };
+    const char* gates[] = { "Every note", "Cantor set", "Sierpinski triangle", "Fibonacci word", "Drone (ison / bourdon)" };
     for (int i = 0; i < Gate::count; ++i) gate.box.addItem (gates[i], i + 1);
     bind.combo (transform.box, [this] (Project& q) -> int& { return q.dolls[(size_t) doll()].transform; });
     bind.combo (gate.box, [this] (Project& q) -> int& { return q.dolls[(size_t) doll()].gate; });
     bind.toggle (mute, [this] (Project& q) -> bool& { return q.dolls[(size_t) doll()].mute; });
     bind.toggle (solo, [this] (Project& q) -> bool& { return q.dolls[(size_t) doll()].solo; });
+    bind.toggle (ensemble, [this] (Project& q) -> bool& { return q.dolls[(size_t) doll()].ensemble; });
+    ensemble.setTooltip ("Turn the chorus into a three-phase string-machine ensemble.");
     nestAll.setTooltip ("For all dolls: the largest plays 4-note chords, then 3, 2, and the smallest a single line.");
     nestAll.onClick = [this] { proc.editProject ([] (Project& q) { nestChords (q); }); refresh(); if (onEdited) onEdited(); };
     {
@@ -350,6 +386,8 @@ DollInspector::DollInspector (MatryoshkaProcessor& p) : proc (p), bind (p), benc
             { "Drive", 0, 1, &DollSettings::drive, pctText },
             { "Chorus", 0, 1, &DollSettings::chorus, pctText },
             { "Tape wow", 0, 1, &DollSettings::wow, pctText },
+            { "Tape age", 0, 1, &DollSettings::age, pctText },
+            { "Bit crush", 0, 1, &DollSettings::crush, pctText },
             { "Hall send", 0, 1, &DollSettings::reverbSend, pctText },
             { "Echo send", 0, 1, &DollSettings::echoSend, pctText },
         };
@@ -374,6 +412,7 @@ std::vector<juce::Component*> DollInspector::synthComps()
 {
     std::vector<juce::Component*> v { &preset, &wave1, &wave2, &filter };
     for (auto& k : synthKnobs) v.push_back (k.get());
+    v.push_back (&sync);
     return v;
 }
 std::vector<juce::Component*> DollInspector::samplerComps()
@@ -384,7 +423,7 @@ std::vector<juce::Component*> DollInspector::samplerComps()
 }
 std::vector<juce::Component*> DollInspector::nestComps()
 {
-    std::vector<juce::Component*> v { &transform, &gate, &mute, &solo, &nestAll };
+    std::vector<juce::Component*> v { &transform, &gate, &mute, &solo, &nestAll, &ensemble };
     for (auto& k : nestKnobs) v.push_back (k.get());
     return v;
 }
@@ -492,9 +531,12 @@ void DollInspector::resized()
         r.removeFromTop (4);
         std::vector<juce::Component*> ks;
         for (auto& k : synthKnobs) ks.push_back (k.get());
-        const int cols = juce::jmax (1, r.getWidth() / 62);
+        ks.push_back (&sync);
+        const int cellW = juce::jmax (56, r.getWidth() / 8);
+        const int cols = juce::jmax (1, r.getWidth() / cellW);
         const int rows = ((int) ks.size() + cols - 1) / cols;
-        layoutGrid (r, ks, 62, juce::jmin (76, r.getHeight() / juce::jmax (1, rows)));
+        layoutGrid (r, ks, cellW, juce::jmin (76, r.getHeight() / juce::jmax (1, rows)));
+        sync.setBounds (sync.getBounds().withSizeKeepingCentre (sync.getWidth(), 26));
     }
     else if (page == SamplerPage)
     {
@@ -524,7 +566,10 @@ void DollInspector::resized()
         mute.setBounds (tg.removeFromLeft (tg.getWidth() / 2));
         solo.setBounds (tg);
         r.removeFromTop (6);
-        nestAll.setBounds (r.removeFromBottom (26).removeFromLeft (180));
+        auto bottomRow = r.removeFromBottom (26);
+        nestAll.setBounds (bottomRow.removeFromLeft (180));
+        bottomRow.removeFromLeft (12);
+        ensemble.setBounds (bottomRow.removeFromLeft (120));
         r.removeFromBottom (6);
         std::vector<juce::Component*> ks;
         for (auto& k : nestKnobs) ks.push_back (k.get());

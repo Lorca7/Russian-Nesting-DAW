@@ -88,7 +88,7 @@ public:
         for (int i = 0; i < t.length; ++i)
         {
             Step s = p.subject[(size_t) (retro ? t.length - 1 - i : i)];
-            s.length = std::clamp (s.length, 1, 8);
+            s.length = std::clamp (s.length, 1, 13);
             if (inv)
                 s.degree = t.anchor - (s.degree - t.anchor);
             t.steps[i] = s;
@@ -163,6 +163,8 @@ public:
                 const int row = 15 - (int) (iteration % 16);
                 return (stepIndex & row) == stepIndex;
             }
+            case Gate::Drone:
+                return stepIndex == 0;
             case Gate::Fibonacci:
             {
                 constexpr double phi = 1.6180339887498949;
@@ -201,15 +203,14 @@ public:
                 if (beat < beatFrom || beat >= beatTo)
                     continue;
                 const auto& s = t.steps[i];
-                if (! s.on)
-                    continue;
-                if (! gateOpen (d.gate, n * t.length + i, n, i))
+                const bool drone = d.gate == Gate::Drone;
+                if (drone ? i != 0 : (! s.on || ! gateOpen (d.gate, n * t.length + i, n, i)))
                     continue;
 
                 NoteEvent e;
                 e.doll = doll;
                 e.beat = beat;
-                e.length = std::max (0.01, s.length * pb * (double) d.legato);
+                e.length = drone ? cyc * 0.98 : std::max (0.01, s.length * pb * (double) d.legato);
                 e.step = i;
                 e.iteration = n;
                 e.fractalDegree = combine (p, doll, s.degree, beat);

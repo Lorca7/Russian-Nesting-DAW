@@ -184,7 +184,7 @@ void SubjectEditor::mouseUp (const juce::MouseEvent& e)
         const int step = dragStep;
         proc.editProject ([&] (Project& p) {
             auto& s = p.subject[(size_t) step];
-            s.length = s.length % 4 + 1;
+            s.length = s.length % 8 + 1;
         });
         project = proc.getProject();
         if (onEdited) onEdited();

@@ -49,7 +49,8 @@ set(MF_ENGINE_SOURCES
     Source/engine/Scales.cpp
     Source/engine/FractalFugue.cpp
     Source/engine/Presets.cpp
-    Source/engine/Project.cpp)
+    Source/engine/Project.cpp
+    Source/engine/Scores.cpp)
 
 set(MF_APP_SOURCES
     ${MF_ENGINE_SOURCES}

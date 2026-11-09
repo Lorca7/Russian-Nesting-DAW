@@ -94,6 +94,13 @@ jobs:
         run: |
           SNAP=$(find build -type f -name UISnapshot -perm -u+x | head -1)
           xvfb-run -a -s "-screen 0 1920x1200x24" "$SNAP" ui-snapshots
+      - name: Print snapshot to the log (only when the commit message asks for it)
+        if: contains(github.event.head_commit.message, '[print-snapshot]')
+        run: |
+          echo "SNAPSHOT-BEGIN"
+          base64 -w 0 ui-snapshots/score-1280x800.jpg
+          echo
+          echo "SNAPSHOT-END"
       - uses: actions/upload-artifact@v4
         with:
           name: ui-snapshots

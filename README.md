@@ -20,21 +20,61 @@ All four dolls state the same **subject**, the theme you write in the Subject gr
 | **Pitch** | Each statement of the subject is transposed so its first note lands on the note the parent is sounding at that moment. The melody is the subject replayed inside each note of itself. *Coupling* blends from a strict canon (0) to the full fractal (100%). *Fold drift* keeps the wander within an octave. |
 | **Fugal answer** | The second largest and the smallest dolls sit an *answer interval* away from the others (a 5th by default), giving subject / answer / subject / answer as in a fugue exposition. *Staggered entries* brings them in one after another, largest first. |
 | **Note combinations** | Each doll can stack scale thirds into chords of 1 to 4 notes. **Nest chords 4-3-2-1** gives the largest doll the largest chord. |
-| **Rhythmic sequencing** | Each doll can play the subject as written, inverted, backwards or both. A fractal **rhythm gate** can thin out its notes: a Cantor set, a Sierpinski triangle or a Fibonacci word. |
+| **Rhythmic sequencing** | Each doll can play the subject as written, inverted, backwards or both. A fractal **rhythm gate** can thin out its notes: a Cantor set, a Sierpinski triangle or a Fibonacci word. The **drone** gate holds the first note of each statement, like the *ison* in chant or a bagpipe drone. |
 
 Everything is a pure function of the project and the beat. That is why the piano roll can show the future, and why playback, WAV export and MIDI export agree note for note.
+
+## Russian scores
+
+A **score** loads a complete fugue in one click: key, scale, fractal law, subject, and a sound for every doll. Choose one from **Russian score** at the top of the Fugue Law panel. Each score is an original subject written in the manner of a Russian tradition or composer. [docs/RUSSIAN-SOURCES.md](docs/RUSSIAN-SOURCES.md) has the research and sources behind each one.
+
+| Group | Score | Drawn from |
+|---|---|---|
+| Sacred & chant | Znamenny Canon | Znamenny chant on the Obikhod scale, oktavists holding the ison drone |
+| | Troestrochie (Three-Line Chant) | Russian three-voice *strochnoe* singing: niz, put', verkh, with dissonant seconds |
+| | Vigil Oktavists | Rachmaninoff's All-Night Vigil: a descent to the oktavists' low B-flat |
+| Bells (zvon) | Perezvon Bell Tower | Blagovest, perezvon and trezvon: the bell tower as a fractal of sizes and speeds |
+| | Perebor Funeral Toll | Each bell once in turn, then all together |
+| Folk | Kamarinskaya Backgrounds | Glinka's "changing backgrounds": the dance tune stays intact while everything around it changes |
+| | Protyazhnaya with Podgoloski | Drawn-out lyrical song in heterophony, over a volynka drone |
+| | Burlak Work Song | Volga barge-haulers' call and response |
+| Classical | White-Key Fugue | After Shostakovich's Op. 87 No. 1: diatonic, strict canon by augmentation |
+| | DSCH Monogram | D–E♭–C–B in prime, inversion, retrograde and retrograde inversion at once |
+| | Gubaidulina Fibonacci | Fibonacci note lengths, golden-ratio dolls, Fibonacci-word gate, bayan |
+| | Octatonic Ritual | Stravinsky's octatonic folk cells and additive rhythm |
+| | Scriabin Mystic Bells | The Prometheus scale unfolding inside itself |
+| Minimal & electronic | Sacred Minimalism | Moscow minimalism: a chant-like cell repeated at four scales |
+| | Solaris Photo-Drone | Artemiev's ANS and Synthi 100 drones, Tcherepnin's nine-step scale |
+| | Kosmos Disco 1980 | Soviet space disco: Polivoks octave bass, string machine, FM bells |
+| | Leningrad New Wave 1986 | Mid-80s rock-club new wave: chorus bass and a toy keyboard |
 
 ## Sound sources
 
 You can put either a synth or a sampler on each of the four dolls.
 
-**Synth.** Two oscillators (saw, square, PWM pulse, triangle, sine with FM), a sub oscillator, noise and analogue drift. Filters: a Moog-style 24 dB ladder, a SEM-style 12 dB state-variable filter, a gritty Polivoks-style filter, high-pass and band-pass. It has amp and filter envelopes and vibrato. Each doll also has drive, chorus and tape wow. Presets by era:
+**Synth.** The synth is designed around Soviet-era instruments:
 
-- **1960s:** Modular Bass, Theremin Wail, Tape-Loop Strings, Combo Organ
-- **1970s:** Mono Lead, String Ensemble, Poly Brass, Polivoks Snarl, ANS Photo-Drone
-- **1980s:** FM Tine Piano, FM Glass Bell, Chorus Pad, Synth-Pop Bass, Digital Hoover Lead
+- **Oscillators:** two oscillators (saw, square, PWM pulse, triangle, sine with FM, drawbar organ) with up to 7 unison voices each, hard sync, glide, a sub oscillator, noise and analogue drift.
+- **Filters:** a Moog-style 24 dB ladder, a SEM-style 12 dB filter, a raw Polivoks-style filter, high-pass and band-pass. There are amp and filter envelopes and vibrato.
+- **Per-doll effects:** drive, chorus or a three-phase string-machine **ensemble**, tape wow, **tape age** (dull top end, saturation and hiss that follows the signal) and **bit crush** for cheap 80s digital.
 
-**Sampler.** Load WAV, AIFF, FLAC, MP3 or M4A, or use one of the built-in samples, all synthesised in code: a balalaika pluck, a kolokol church bell, a choir "Ah" and a bayan accordion. **Use on all dolls** gives every doll the same sample, so four playheads read one sound like fugue voices. There are three playhead modes:
+Presets by era:
+
+- **1960s:** Termenvox Theremin, ANS Photo-Cluster, Ekvodin Film Lead, Gosteleradio Tape Strings, Sputnik Telemetry
+- **1970s:** Junost Combo Organ, VIA String Ensemble, Synthi Stalker Drone, Solaris Organ Halo, Kosmos Mono Lead
+- **1980s:** Polivoks Bass, Polivoks Scream Lead, Aelita Brass, Estradin Fat Bass, Estrada FM Piano, Estrada FM Bells, Leningrad Chorus Bass, Elektronika Toy Keys, Perestroika Synth-Pop Pad
+
+**Sampler.** You can load your own WAV, AIFF, FLAC, MP3 or M4A, or use one of 18 built-in Russian folk and church sounds. They are all synthesised in code from models of the real instruments:
+
+| Group | Samples |
+|---|---|
+| Strings | balalaika, bass balalaika, domra tremolo, gusli |
+| Winds & reeds | bayan, Tula garmon, zhaleika, svirel, volynka (bagpipe drone) |
+| Voices | choir "Ah", oktavist basso "O" |
+| Bells | kolokol church bell, zazvonnye small bells, blagovest great bell |
+| Percussion | vargan (jaw harp), lozhki (spoons), buben (frame drum), treshchotka (rattle) |
+
+**Use on all dolls** gives every doll the same sample, so four playheads read one sound like fugue voices. There are three playhead modes:
 
 - **Pitched:** one-shot playback, repitched to each note.
 - **Slice:** the sample is cut into slices, and the doll's fractal melody chooses which slice plays.

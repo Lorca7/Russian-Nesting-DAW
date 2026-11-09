@@ -32,8 +32,12 @@ private:
     uint64_t orderCounter = 0;
     uint32_t seedCounter = 1;
     dsp::DelayLine wowLine, chorusLine;
-    float wowPhase = 0, flutterPhase = 0, chorusPhase = 0;
+    float wowPhase = 0, flutterPhase = 0, chorusPhase = 0, vibPhase = 0;
     float gainSmoothed = 0;
+    float lastSynthHz = 0;                    // for glide between notes
+    float crushHold = 0; int crushCount = 0;  // sample-and-hold for the bit crusher
+    float ageLp = 0, ageEnv = 0;              // tape age: tone and the signal-following hiss
+    dsp::Rng hissRng;
 };
 
 /** Renders the whole fractal fugue: four dolls, an echo, a cathedral reverb and a limiter. */

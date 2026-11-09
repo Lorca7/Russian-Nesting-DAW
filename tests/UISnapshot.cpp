@@ -44,6 +44,13 @@ int main (int argc, char** argv)
 
     shoot ("editor-1280x800", 1280, 800);
     shoot ("editor-1600x1000", 1600, 1000);
+
+    // a Russian score loaded, at the default size
+    editor.reset();
+    proc->loadScore (3);
+    editor.reset (proc->createEditor());
+    proc->setPlaying (true);
+    shoot ("score-1280x800", 1280, 800);
     editor.reset();
     return 0;
 }

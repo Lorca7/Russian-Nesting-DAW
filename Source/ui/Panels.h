@@ -14,11 +14,13 @@ public:
     void resized() override;
     void refresh();
     std::function<void()> onEdited;
+    std::function<void (int)> onLoadScore;
 
 private:
     void updateScaleNote();
     MatryoshkaProcessor& proc;
     Bindings bind;
+    Picker score { "Russian score (loads a whole fugue)" };
     Picker key { "Key" }, scale { "Scale" }, ratio { "Fractal ratio" }, answer { "Answer interval" }, pulse { "Smallest pulse" }, echoTime { "Echo time" };
     Knob coupling { "Coupling", 0.0, 1.0 }, entryGap { "Entry gap", 0.0, 16.0, 0.5 };
     juce::ToggleButton fold { "Fold drift" }, stagger { "Staggered entries" };
@@ -83,6 +85,7 @@ private:
     Picker builtIn { "Built-in sample" }, sampleMode { "Playhead mode" };
     juce::TextButton loadFile { "Load audio file..." }, shareAll { "Use on all dolls" };
     juce::ToggleButton pitchFollow { "Follow pitch" }, reverse { "Reverse" };
+    juce::ToggleButton sync { "Hard sync" }, ensemble { "Ensemble" };
     std::vector<std::unique_ptr<Knob>> samplerKnobs;
     SampleBench bench;
     std::unique_ptr<juce::FileChooser> chooser;

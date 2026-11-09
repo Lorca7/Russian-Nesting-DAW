@@ -1,6 +1,7 @@
 // Plain C++ tests for the fractal fugue engine (no JUCE needed).
 #include "../Source/engine/FractalFugue.h"
 #include "../Source/engine/Presets.h"
+#include "../Source/engine/Scores.h"
 #include <cstdio>
 #include <cstdlib>
 #include <set>
@@ -146,7 +147,53 @@ int main()
             }
     }
 
-    CHECK (synthPresets().size() >= 12);
+    CHECK (synthPresets().size() >= 18);
+    for (auto& pr : synthPresets()) CHECK (! pr.note.empty());
+
+    // ---- drone gate: one held note per statement, as long as the statement
+    {
+        Project q;
+        q.staggerEntries = false;
+        q.dolls[0].gate = Gate::Drone;
+        const auto ev = collect (q, 0, 0, FractalFugue::cycleBeats (q, 0) * 3);
+        CHECK (ev.size() == 3);
+        for (auto& e : ev) CHECK (e.length > FractalFugue::cycleBeats (q, 0) * 0.9);
+    }
+
+    // ---- built-in samples: unique names, valid roots
+    {
+        std::set<std::string> names;
+        for (auto& b : builtInSamples()) { names.insert (b.name); CHECK (b.rootNote > 20 && b.rootNote < 100); }
+        CHECK (names.size() == builtInSamples().size());
+        CHECK (builtInSamples().size() >= 18);
+        CHECK (std::string (builtInSamples()[0].name) == "Balalaika pluck"); // saved projects depend on indices
+    }
+
+    // ---- scores: everything they reference exists, every doll plays, notes stay in range
+    {
+        for (auto& p : scoreProblems()) std::printf ("score problem: %s\n", p.c_str());
+        CHECK (scoreProblems().empty());
+        CHECK (scores().size() >= 15);
+        std::set<std::string> names;
+        for (auto& sc : scores())
+        {
+            names.insert (sc.name);
+            CHECK (! sc.description.empty() && ! sc.basedOn.empty());
+            for (int d = 0; d < kNumDolls; ++d)
+            {
+                int count = 0;
+                FractalFugue::forEachEvent (sc.project, d, 0, 128, [&] (const NoteEvent& e) {
+                    ++count;
+                    for (int c = 0; c < e.numNotes; ++c) CHECK (e.notes[c] >= 12 && e.notes[c] <= 108);
+                });
+                if (count == 0) std::printf ("silent doll %d in %s\n", d, sc.name.c_str());
+                CHECK (count > 0);
+                if (sc.project.dolls[(size_t) d].source == Source::Sampler)
+                    CHECK (sc.samples[(size_t) d] >= 0);
+            }
+        }
+        CHECK (names.size() == scores().size());
+    }
 
     if (failures == 0)
         std::printf ("All engine tests passed.\n");

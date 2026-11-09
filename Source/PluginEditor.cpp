@@ -1,4 +1,5 @@
 #include "PluginEditor.h"
+#include "engine/Scores.h"
 
 using namespace mf;
 using namespace mf::theme;
@@ -77,6 +78,13 @@ MatryoshkaEditor::MatryoshkaEditor (MatryoshkaProcessor& p)
     shelf.onSelect = [this] (int d) { inspector.setDoll (d); };
     auto edited = [this] { subject.update (proc.getProject()); };
     law.onEdited = edited;
+    law.onLoadScore = [this] (int i) {
+        proc.loadScore (i);
+        refreshAll();
+        inspector.setDoll (shelf.selected);
+        const auto& sc = scores()[(size_t) i];
+        setStatus (juce::String (sc.name) + " (" + sc.basedOn + "). " + sc.description);
+    };
     subject.onEdited = [this] { subject.update (proc.getProject()); law.refresh(); };
     inspector.onEdited = edited;
     inspector.onStatus = [this] (const juce::String& s) { setStatus (s); };

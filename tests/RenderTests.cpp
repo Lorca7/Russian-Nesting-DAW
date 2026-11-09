@@ -2,6 +2,7 @@
 // sampler mode, checks the output is finite, audible and not clipping, and round-trips a project.
 #include "../Source/dsp/FugueEngine.h"
 #include "../Source/engine/Presets.h"
+#include "../Source/engine/Scores.h"
 #include "../Source/io/Exporters.h"
 #include "../Source/io/ProjectIO.h"
 #include <cstdio>
@@ -39,8 +40,8 @@ static Stats render (const Project& p, const SampleSet& samples, double seconds)
 int main()
 {
     std::vector<SampleData> built;
-    for (int i = 0; i < 4; ++i) built.push_back (makeBuiltInSample (i));
-    for (auto& b : built) { CHECK (b.data.size() > 48000); CHECK (b.durationSeconds() > 1.0); }
+    for (int i = 0; i < (int) builtInSamples().size(); ++i) built.push_back (makeBuiltInSample (i));
+    for (auto& b : built) { CHECK (b.data.size() > 4800); CHECK (b.durationSeconds() > 0.2); }
     const SampleSet samples { &built[0], &built[1], &built[2], &built[3] };
 
     // default project
@@ -60,12 +61,32 @@ int main()
         CHECK (s.finite); CHECK (s.peak > 0.02f); CHECK (s.peak <= 1.0f);
     }
 
+    // every Russian score, with its own samples, renders audibly without clipping
+    for (auto& sc : scores())
+    {
+        SampleSet set { &built[0], &built[0], &built[0], &built[0] };
+        for (int d = 0; d < kNumDolls; ++d)
+            if (sc.samples[(size_t) d] >= 0) set[(size_t) d] = &built[(size_t) sc.samples[(size_t) d]];
+        const auto s = render (sc.project, set, 12.0);
+        std::printf ("score %-34s peak %.3f rms %.4f\n", sc.name.c_str(), s.peak, s.rms);
+        CHECK (s.finite); CHECK (s.peak > 0.05f); CHECK (s.peak <= 1.0f);
+    }
+
+    // the new effects: ensemble, bit crush and tape age stay finite and bounded
+    {
+        Project p = makeDefaultProject();
+        for (auto& d : p.dolls) { d.ensemble = true; d.chorus = 1.0f; d.crush = 1.0f; d.age = 1.0f; d.synth.unison = 7; d.synth.glide = 0.3f; d.synth.sync = true; }
+        const auto s = render (p, samples, 4.0);
+        std::printf ("all effects maxed: peak %.3f rms %.4f\n", s.peak, s.rms);
+        CHECK (s.finite); CHECK (s.peak > 0.02f); CHECK (s.peak <= 1.0f);
+    }
+
     // sampler modes with each built-in sample shared by all four playheads
-    for (int b = 0; b < 4; ++b)
+    for (int b = 0; b < (int) built.size(); ++b)
         for (int mode = 0; mode < SampleMode::count; ++mode)
         {
             Project p = makeDefaultProject();
-            for (auto& d : p.dolls) { d.source = Source::Sampler; d.sampler.mode = mode; d.sampler.rootNote = built[(size_t) b].rootNote; }
+            for (auto& d : p.dolls) { d.source = Source::Sampler; d.sampler.mode = mode; d.sampler.rootNote = built[(size_t) b].rootNote; d.sampler.pitchFollow = ! builtInSamples()[(size_t) b].percussive; }
             const SampleSet shared { &built[(size_t) b], &built[(size_t) b], &built[(size_t) b], &built[(size_t) b] };
             const auto s = render (p, shared, 3.0);
             std::printf ("sampler %-20s mode %d peak %.3f rms %.4f\n", built[(size_t) b].name.c_str(), mode, s.peak, s.rms);
@@ -118,12 +139,15 @@ int main()
         Project a = makeDefaultProject();
         a.bpm = 133; a.scaleIndex = findScale ("Obikhod (Znamenny Chant)"); a.ratio = Ratio::Golden;
         a.dolls[2].sampler.mode = SampleMode::Scrub; a.dolls[1].synth.cutoff = 777; a.subject[3].degree = -4; a.subjectLength = 11;
+        a.dolls[0].synth.unison = 5; a.dolls[0].synth.sync = true; a.dolls[3].ensemble = true; a.dolls[3].age = 0.4f; a.dolls[2].gate = Gate::Drone;
         auto xml = projectToXml (a);
         Project b;
         projectFromXml (*xml, b);
         CHECK (b.bpm == 133); CHECK (b.scaleIndex == a.scaleIndex); CHECK (b.ratio == Ratio::Golden);
         CHECK (b.dolls[2].sampler.mode == SampleMode::Scrub); CHECK (std::abs (b.dolls[1].synth.cutoff - 777) < 0.01);
         CHECK (b.subject[3].degree == -4); CHECK (b.subjectLength == 11);
+        CHECK (b.dolls[0].synth.unison == 5); CHECK (b.dolls[0].synth.sync); CHECK (b.dolls[3].ensemble);
+        CHECK (std::abs (b.dolls[3].age - 0.4f) < 1e-4f); CHECK (b.dolls[2].gate == Gate::Drone);
     }
 
     if (failures == 0) std::printf ("All render tests passed.\n");

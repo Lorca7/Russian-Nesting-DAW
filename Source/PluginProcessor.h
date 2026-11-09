@@ -47,6 +47,8 @@ public:
 
     // ---- samples (message thread)
     void useBuiltInSample (int doll, int builtInIndex);
+    /** Loads one of the Russian scores: the whole project plus its built-in samples. */
+    void loadScore (int scoreIndex);
     bool loadSampleFile (int doll, const juce::File& file, juce::String& error);
     void shareSampleWithAll (int fromDoll);
     const mf::SampleData* getSample (int doll) const { return currentSamples[(size_t) doll].load(); }
@@ -86,7 +88,8 @@ private:
 
     // samples: owned by the library for the lifetime of the processor, audio reads raw pointers
     std::vector<std::unique_ptr<mf::SampleData>> library;
-    std::array<const mf::SampleData*, 4> builtIns {};
+    const mf::SampleData* builtIn (int index); // synthesised on first use
+    std::vector<const mf::SampleData*> builtIns;
     std::array<std::atomic<const mf::SampleData*>, mf::kNumDolls> currentSamples {};
     std::array<int, mf::kNumDolls> sampleBuiltInIndex { 0, 0, 0, 0 };
     std::array<juce::String, mf::kNumDolls> sampleFilePaths;
