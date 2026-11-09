@@ -85,7 +85,7 @@ private:
     Picker builtIn { "Built-in sample" }, sampleMode { "Playhead mode" };
     juce::TextButton loadFile { "Load audio file..." }, shareAll { "Use on all dolls" };
     juce::ToggleButton pitchFollow { "Follow pitch" }, reverse { "Reverse" };
-    juce::ToggleButton sync { "Hard sync" }, ensemble { "Ensemble" };
+    juce::ToggleButton sync { "Sync" }, ensemble { "Ensemble" };
     std::vector<std::unique_ptr<Knob>> samplerKnobs;
     SampleBench bench;
     std::unique_ptr<juce::FileChooser> chooser;

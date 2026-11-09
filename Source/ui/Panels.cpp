@@ -404,8 +404,7 @@ DollInspector::DollInspector (MatryoshkaProcessor& p) : proc (p), bind (p), benc
     for (auto* c : synthComps()) addChildComponent (c);
     for (auto* c : samplerComps()) addChildComponent (c);
     for (auto* c : nestComps()) addChildComponent (c);
-    setDoll (0);
-    showPage (SynthPage);
+    setDoll (0); // also opens the page that matches what the doll plays
 }
 
 std::vector<juce::Component*> DollInspector::synthComps()
